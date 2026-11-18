@@ -1,0 +1,13 @@
+{
+  "name": "warehouse-route-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "3D visualisation for AI warehouse path-planning algorithms",
+  "scripts": {
+    "start": "python server.py",
+    "test": "python -m unittest discover -s tests -v"
+  },
+  "dependencies": {
+    "three": "^0.181.1"
+  }
+}
