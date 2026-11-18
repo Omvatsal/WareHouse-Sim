@@ -31,6 +31,156 @@ def _serialise_event(step: int, current: Position, frontier, considered, scores=
     }
 
 
+def _result(
+    algorithm: str,
+    started: float,
+    parent: dict[Position, Position | None],
+    destination: Position,
+    best_cost: dict[Position, int],
+    expanded: set[Position],
+    trace: list[dict],
+    reached: bool,
+) -> SearchResult:
+    elapsed = (perf_counter() - started) * 1000
+    path = _path(parent, destination) if reached else []
+    return SearchResult(
+        algorithm,
+        reached,
+        path,
+        best_cost[destination] if reached else 0,
+        len(expanded),
+        elapsed,
+        trace,
+    )
+
+
+def _expand_unweighted(
+    warehouse: Warehouse,
+    current: Position,
+    frontier,
+    parent: dict[Position, Position | None],
+    best_cost: dict[Position, int],
+    expanded: set[Position],
+    trace: list[dict],
+    algorithm: str,
+    blocked: set[Position] | None = None,
+) -> None:
+    """Expand one BFS/DFS node and append its visualisation event."""
+    expanded.add(current)
+    considered = []
+    neighbors = warehouse.neighbors(current, blocked)
+    if algorithm == "dfs":
+        neighbors = list(reversed(neighbors))
+    for neighbor in neighbors:
+        if neighbor in parent:
+            continue
+        parent[neighbor] = current
+        best_cost[neighbor] = best_cost[current] + warehouse.move_cost(neighbor)
+        considered.append(neighbor)
+        frontier.append(neighbor)
+    trace.append(_serialise_event(len(trace), current, list(frontier), considered))
+
+
+def bfs_search(warehouse: Warehouse, start: Position | None = None, goal: Position | None = None, blocked: set[Position] | None = None) -> SearchResult:
+    """Breadth-first search: FIFO frontier, optimal number of moves."""
+    started = perf_counter()
+    origin, destination = start or warehouse.start, goal or warehouse.goal
+    frontier = deque([origin])
+    parent = {origin: None}
+    best_cost = {origin: 0}
+    expanded: set[Position] = set()
+    trace: list[dict] = []
+    while frontier:
+        current = frontier.popleft()
+        if current in expanded:
+            continue
+        if current == destination:
+            return _result("bfs", started, parent, destination, best_cost, expanded, trace, True)
+        _expand_unweighted(warehouse, current, frontier, parent, best_cost, expanded, trace, "bfs", blocked)
+    return _result("bfs", started, parent, destination, best_cost, expanded, trace, False)
+
+
+def dfs_search(warehouse: Warehouse, start: Position | None = None, goal: Position | None = None, blocked: set[Position] | None = None) -> SearchResult:
+    """Depth-first search: LIFO frontier, useful for deep exploration."""
+    started = perf_counter()
+    origin, destination = start or warehouse.start, goal or warehouse.goal
+    frontier = [origin]
+    parent = {origin: None}
+    best_cost = {origin: 0}
+    expanded: set[Position] = set()
+    trace: list[dict] = []
+    while frontier:
+        current = frontier.pop()
+        if current in expanded:
+            continue
+        if current == destination:
+            return _result("dfs", started, parent, destination, best_cost, expanded, trace, True)
+        _expand_unweighted(warehouse, current, frontier, parent, best_cost, expanded, trace, "dfs", blocked)
+    return _result("dfs", started, parent, destination, best_cost, expanded, trace, False)
+
+
+def _informed_search(
+    warehouse: Warehouse,
+    algorithm: str,
+    start: Position | None = None,
+    goal: Position | None = None,
+    blocked: set[Position] | None = None,
+) -> SearchResult:
+    """Shared priority-queue mechanics for Greedy Best-First Search and A*."""
+    started = perf_counter()
+    origin, destination = start or warehouse.start, goal or warehouse.goal
+    blocked = blocked or set()
+    frontier = []
+    counter = itertools.count()
+    heapq.heappush(frontier, (manhattan(origin, destination), next(counter), origin))
+    parent = {origin: None}
+    best_cost = {origin: 0}
+    expanded: set[Position] = set()
+    trace: list[dict] = []
+    while frontier:
+        _, _, current = heapq.heappop(frontier)
+        if current in expanded:
+            continue
+        expanded.add(current)
+        if current == destination:
+            return _result(algorithm, started, parent, destination, best_cost, expanded, trace, True)
+        considered = []
+        scores = []
+        for neighbor in warehouse.neighbors(current, blocked):
+            new_cost = best_cost[current] + warehouse.move_cost(neighbor)
+            if new_cost >= best_cost.get(neighbor, 10**9):
+                continue
+            parent[neighbor] = current
+            best_cost[neighbor] = new_cost
+            heuristic = manhattan(neighbor, destination)
+            priority = heuristic if algorithm == "greedy" else new_cost + heuristic
+            considered.append(neighbor)
+            scores.append({"cell": list(neighbor), "g": new_cost, "h": heuristic, "f": priority if algorithm == "astar" else None})
+            heapq.heappush(frontier, (priority, next(counter), neighbor))
+        trace.append(_serialise_event(len(trace), current, [entry[2] for entry in frontier], considered, scores))
+    return _result(algorithm, started, parent, destination, best_cost, expanded, trace, False)
+
+
+def greedy_search(
+    warehouse: Warehouse,
+    start: Position | None = None,
+    goal: Position | None = None,
+    blocked: set[Position] | None = None,
+) -> SearchResult:
+    """Greedy Best-First Search: prioritize h(n), the estimated distance to goal."""
+    return _informed_search(warehouse, "greedy", start, goal, blocked)
+
+
+def astar_search(
+    warehouse: Warehouse,
+    start: Position | None = None,
+    goal: Position | None = None,
+    blocked: set[Position] | None = None,
+) -> SearchResult:
+    """A*: prioritize f(n) = g(n) + h(n), balancing cost-so-far and estimate."""
+    return _informed_search(warehouse, "astar", start, goal, blocked)
+
+
 def search(
     warehouse: Warehouse,
     algorithm: str,
@@ -38,77 +188,14 @@ def search(
     goal: Position | None = None,
     blocked: set[Position] | None = None,
 ) -> SearchResult:
+    """Compatibility dispatcher used by the API and trolley experiment."""
     algorithm = algorithm.lower()
-    if algorithm not in {"bfs", "dfs", "greedy", "astar"}:
+    functions = {
+        "bfs": bfs_search,
+        "dfs": dfs_search,
+        "greedy": greedy_search,
+        "astar": astar_search,
+    }
+    if algorithm not in functions:
         raise ValueError(f"Unknown algorithm: {algorithm}")
-
-    started = perf_counter()
-    origin = start or warehouse.start
-    destination = goal or warehouse.goal
-    blocked = blocked or set()
-    parent: dict[Position, Position | None] = {origin: None}
-    best_cost: dict[Position, int] = {origin: 0}
-    expanded: set[Position] = set()
-    trace: list[dict] = []
-    counter = itertools.count()
-
-    if algorithm == "bfs":
-        frontier = deque([origin])
-    elif algorithm == "dfs":
-        frontier = [origin]
-    else:
-        frontier = []
-        initial_priority = manhattan(origin, destination)
-        heapq.heappush(frontier, (initial_priority, next(counter), origin))
-
-    while frontier:
-        if algorithm == "bfs":
-            current = frontier.popleft()
-        elif algorithm == "dfs":
-            current = frontier.pop()
-        else:
-            _, _, current = heapq.heappop(frontier)
-
-        if current in expanded:
-            continue
-        expanded.add(current)
-        if current == destination:
-            path = _path(parent, destination)
-            elapsed = (perf_counter() - started) * 1000
-            return SearchResult(algorithm, True, path, best_cost[destination], len(expanded), elapsed, trace)
-
-        considered = []
-        score_rows = []
-        neighbors = warehouse.neighbors(current, blocked)
-        if algorithm == "dfs":
-            neighbors = list(reversed(neighbors))
-        for neighbor in neighbors:
-            new_cost = best_cost[current] + warehouse.move_cost(neighbor)
-            unseen = neighbor not in parent
-            improved = new_cost < best_cost.get(neighbor, 10**9)
-            if (algorithm in {"bfs", "dfs"} and unseen) or (algorithm in {"greedy", "astar"} and improved):
-                parent[neighbor] = current
-                best_cost[neighbor] = new_cost
-                considered.append(neighbor)
-                heuristic = manhattan(neighbor, destination)
-                priority = heuristic if algorithm == "greedy" else new_cost + heuristic
-                score_rows.append({
-                    "cell": list(neighbor), "g": new_cost, "h": heuristic,
-                    "f": priority if algorithm == "astar" else None,
-                })
-                if algorithm == "bfs":
-                    frontier.append(neighbor)
-                elif algorithm == "dfs":
-                    frontier.append(neighbor)
-                else:
-                    heapq.heappush(frontier, (priority, next(counter), neighbor))
-
-        frontier_positions = (
-            [entry[2] for entry in frontier]
-            if algorithm in {"greedy", "astar"}
-            else list(frontier)
-        )
-        trace.append(_serialise_event(len(trace), current, frontier_positions, considered, score_rows))
-
-    elapsed = (perf_counter() - started) * 1000
-    return SearchResult(algorithm, False, [], 0, len(expanded), elapsed, trace)
+    return functions[algorithm](warehouse, start, goal, blocked)
