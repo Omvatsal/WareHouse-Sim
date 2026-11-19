@@ -9,7 +9,13 @@ import { SearchResult } from '../../core/models/warehouse.model';
   imports: [CommonModule],
   template: `
     <section class="comparison-dock" aria-labelledby="comparison-heading">
-      <div class="dock-header" (click)="toggleCollapsed()">
+      <button
+        type="button"
+        class="dock-header"
+        (click)="toggleCollapsed()"
+        [attr.aria-expanded]="!isCollapsed()"
+        aria-controls="comparison-results"
+      >
         <div class="dock-title-group">
           <span class="dock-eyebrow">Task 5 Evaluation Matrix</span>
           <h2 id="comparison-heading">Performance Comparison & Replanning Metrics</h2>
@@ -17,7 +23,7 @@ import { SearchResult } from '../../core/models/warehouse.model';
 
         <div class="dock-actions">
           <span class="dock-sub">Comparing step count vs operating cost & dynamic replans.</span>
-          <button type="button" class="collapse-btn" [attr.aria-expanded]="!isCollapsed()">
+          <span class="collapse-btn" aria-hidden="true">
             <svg
               width="16"
               height="16"
@@ -29,12 +35,12 @@ import { SearchResult } from '../../core/models/warehouse.model';
             >
               <polyline points="6 9 12 15 18 9" />
             </svg>
-          </button>
+          </span>
         </div>
-      </div>
+      </button>
 
       @if (!isCollapsed()) {
-        <div class="table-wrap">
+        <div class="table-wrap" id="comparison-results">
           <table class="benchmark-table">
             <thead>
               <tr>
@@ -70,13 +76,13 @@ import { SearchResult } from '../../core/models/warehouse.model';
                     <td class="cell-mono cost-val">
                       <strong>{{ row.totalCost }}</strong>
                       @if (row.algorithm === 'astar') {
-                        <span class="cost-tag best">Global Min</span>
+                        <span class="cost-tag best">Lowest cost</span>
                       } @else if (row.algorithm === 'astar_replan') {
-                        <span class="cost-tag detour">+2 Detour</span>
+                        <span class="cost-tag detour">Dynamic detour</span>
                       } @else if (row.algorithm === 'dfs') {
-                        <span class="cost-tag penalty">+21 Sub-optimal</span>
+                        <span class="cost-tag penalty">Non-optimal</span>
                       } @else {
-                        <span class="cost-tag penalty">+3 (Crowded)</span>
+                        <span class="cost-tag penalty">Crowded penalty</span>
                       }
                     </td>
                     <td class="cell-mono">{{ row.nodesExpanded }} nodes</td>
@@ -110,12 +116,17 @@ import { SearchResult } from '../../core/models/warehouse.model';
     }
 
     .dock-header {
+      width: 100%;
       padding: var(--space-4) var(--space-5);
       display: flex;
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
       user-select: none;
+      border: 0;
+      color: inherit;
+      text-align: left;
+      font: inherit;
     }
 
     .dock-header:hover {
@@ -351,13 +362,13 @@ export class ComparisonDockComponent {
         return 'Cost-Optimal (Balances cost-so-far + Manhattan distance, avoids crowded corridor)';
       case 'astar_replan':
       case 'trolley_replan':
-        return 'Dynamic Obstacle Avoidance (Detected [6, 12] from [7, 12], circumvented via col 13)';
+        return 'Dynamic Obstacle Avoidance (detects the hidden trolley, updates the map, and replans)';
       case 'bfs':
-        return 'Hop-Optimal (Guarantees fewest 20 moves, but unweighted: crosses crowded cell [4, 4] costing 23)';
+        return 'Hop-Optimal (takes the short centre aisle without considering its crowded-cell cost)';
       case 'greedy':
-        return 'Heuristic Trap (Lured into crowded corridor by greedy h(n) estimation, 20 moves, cost 23)';
+        return 'Heuristic Trap (heads directly toward the goal through the crowded centre aisle)';
       case 'dfs':
-        return 'LIFO Deep Dive (Wanders along warehouse perimeter: 38 moves, cost 41; non-optimal)';
+        return 'LIFO Deep Dive (explores a long perimeter branch and is not path-optimal)';
       default:
         return 'Standard Search';
     }

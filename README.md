@@ -18,10 +18,10 @@ A complete Python implementation of the **AI-Based Route Planning for a Warehous
 | Element | Definition |
 | --- | --- |
 | State | Robot grid coordinate `(row, column)` plus the currently known blocked cells. |
-| Initial state | Packing station at `[8, 1]`. |
+| Initial state | Packing station at `[4, 1]`. |
 | Actions | Move up, right, down, or left into a passable cell. |
 | Transition model | Applying an action moves the robot to the adjacent coordinate when it is in bounds and not a shelf, restricted zone, or known trolley. |
-| Goal test | Current coordinate equals the dispatch point `[1, 12]`. |
+| Goal test | Current coordinate equals the dispatch point `[4, 12]`. |
 | Path cost | Sum of entered-cell costs: normal is 1 and crowded is 4. |
 
 Manhattan distance is admissible because the robot cannot move diagonally and every legal step costs at least 1. Therefore `|row-goalRow| + |column-goalColumn|` can never exceed the true remaining travel cost.

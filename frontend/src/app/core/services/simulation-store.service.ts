@@ -233,16 +233,18 @@ export class SimulationStoreService {
 
     this.stepLabel.set('Phase 1: Initial Dispatch Route (A*)');
     this.statusMessage.set(
-      'Computing initial optimal route. The trolley at [6, 12] is unmapped and omitted from robot known map.'
+      `Computing initial optimal route. The trolley at [${this.scenario()?.trolley.join(', ')}] is unmapped and omitted from the robot's known map.`
     );
 
     this.api.runTrolley().subscribe({
       next: async (data) => {
         // Step 1: Draw the initial planned A* path in cyan ghost beam
         this.scene.drawPath(data.original.path, SCENE_PALETTE.frontier);
-        this.stepLabel.set('Phase 1: Initial Plan Committed · 20 Moves · Cost 20');
+        this.stepLabel.set(
+          `Phase 1: Initial Plan Committed · ${data.original.moves} Moves · Cost ${data.original.totalCost}`
+        );
         this.statusMessage.set(
-          `Initial plan committed: 20 moves, cost 20. Robot departing from Packing Station [${this.scenario()?.start.join(', ')}].`
+          `Initial plan committed: ${data.original.moves} moves, cost ${data.original.totalCost}. Robot departing from Packing Station [${this.scenario()?.start.join(', ')}].`
         );
         await this.sleep(700);
 
@@ -271,7 +273,7 @@ export class SimulationStoreService {
         ]);
         await this.sleep(1400);
 
-        // Step 4: Online A* Search Wavefront from Current Position [7, 12]
+        // Step 4: Online A* search wavefront from the robot's current position.
         this.stepLabel.set(`Phase 4: Online A* Replanning from [${data.detectedAt.join(', ')}]`);
         this.statusMessage.set(
           `A* searching state space from current position [${data.detectedAt.join(', ')}] with [${data.trolley.join(', ')}] blocked...`
@@ -303,7 +305,7 @@ export class SimulationStoreService {
         if (data.goalReached) {
           this.stepLabel.set('Phase 5: Detour Committed · Executing Revised Route');
           this.statusMessage.set(
-            `Detour confirmed via open aisle col 13! Circumventing trolley at [${data.trolley.join(', ')}].`
+            `Detour confirmed through an open bypass. Circumventing trolley at [${data.trolley.join(', ')}].`
           );
           await this.sleep(600);
 

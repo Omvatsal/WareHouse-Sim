@@ -237,11 +237,17 @@ export class ThreeSceneService {
 
   private buildCrowded(position: Position): THREE.Group {
     const group = new THREE.Group();
-    const pallet = this.box(0.68, 0.09, 0.68, 0x543216, 0.08);
-    group.add(pallet);
-    const parcel = this.box(0.48, 0.24, 0.46, SCENE_PALETTE.crowded, 0.24);
-    parcel.rotation.y = ((position[1] % 3) - 1) * 0.15;
-    group.add(parcel);
+    // Crowded means slow, not blocked. Keep the middle of the tile open so
+    // the route and robot never appear to pass through a solid obstacle.
+    const lane = this.box(0.78, 0.025, 0.78, 0x543216, 0.035);
+    group.add(lane);
+    [-0.29, 0.29].forEach((x, index) => {
+      const parcel = this.box(0.18, 0.16 + index * 0.04, 0.18, SCENE_PALETTE.crowded, 0.12 + index * 0.02);
+      parcel.position.x = x;
+      parcel.position.z = index ? 0.27 : -0.27;
+      parcel.rotation.y = index ? -0.18 : 0.16;
+      group.add(parcel);
+    });
     return this.addAt(group, position) as THREE.Group;
   }
 
