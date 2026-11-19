@@ -1,0 +1,22 @@
+<div class="studio-shell">
+  <!-- Top Navigation & Global Controls -->
+  <app-header (openGuide)="onOpenGuide()"></app-header>
+
+  <!-- 3-Column Studio Workspace -->
+  <main class="workspace-grid" id="main-content">
+    <!-- Left Column: Strategy & Scene Controls -->
+    <app-control-panel class="rail-controls"></app-control-panel>
+
+    <!-- Center Column: 3D Simulation Stage -->
+    <app-stage-3d class="stage-viewport"></app-stage-3d>
+
+    <!-- Right Column: Live Telemetry & Decision Log -->
+    <app-telemetry-panel class="rail-telemetry"></app-telemetry-panel>
+  </main>
+
+  <!-- Bottom Dock: Head-to-Head Comparison Matrix -->
+  <app-comparison-dock></app-comparison-dock>
+
+  <!-- Accessible Modal Guide -->
+  <app-guide-modal #guideModal></app-guide-modal>
+</div>

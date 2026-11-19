@@ -5,6 +5,8 @@
   "description": "3D visualisation for AI warehouse path-planning algorithms",
   "scripts": {
     "start": "python server.py",
+    "build": "npm --prefix frontend run build",
+    "build:watch": "npm --prefix frontend run watch",
     "test": "python -m unittest discover -s tests -v"
   },
   "dependencies": {

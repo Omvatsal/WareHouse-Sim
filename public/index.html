@@ -1,123 +1,15 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-beasties-container>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#08121a">
-  <title>Warehouse Route Lab — 3D search simulator</title>
-  <link rel="stylesheet" href="/styles.css">
-  <script type="importmap">
-    {"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}
-  </script>
-</head>
+  <meta charset="utf-8">
+  <title>Warehouse Route Lab — AI Autonomous Navigation & 3D Simulation</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Precision 3D autonomous warehouse robot route-planning simulation powered by Angular, Three.js, and Anime.js.">
+  <meta name="theme-color" content="#0a0e14">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+<style>:root{--surface-ground:#0a0e14;--surface-card:#121820;--surface-elevated:#1a222d;--surface-subtle:#1e2735;--surface-glass:rgba(18, 24, 32, .85);--border-subtle:#222d3d;--border-hover:#2d3b4e;--border-active:#38495f;--focus-ring:#2dd4bf;--text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-tertiary:#64748b;--text-disabled:#475569;--accent-frontier:#2dd4bf;--accent-candidate:#f59e0b;--accent-route:#eab308;--accent-success:#10b981;--accent-danger:#f43f5e;--accent-crowded:#b45309;--accent-shelf:#475569;--font-sans:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;--font-mono:"JetBrains Mono", "SF Mono", Consolas, "Fira Code", monospace;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-full:9999px;--shadow-card:0 4px 16px -2px rgba(0, 0, 0, .4), 0 1px 2px rgba(0, 0, 0, .25);--shadow-elevated:0 10px 30px -4px rgba(0, 0, 0, .6), 0 2px 4px rgba(0, 0, 0, .3);--shadow-glow-teal:0 0 16px rgba(45, 212, 191, .2);--shadow-glow-amber:0 0 16px rgba(245, 158, 11, .2);color-scheme:dark}*,*:before,*:after{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;background:var(--surface-ground);color:var(--text-primary);font-family:var(--font-sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}</style><link rel="stylesheet" href="styles-YYFXOHYD.css" media="print" data-beasties-media="all"><noscript><link rel="stylesheet" href="styles-YYFXOHYD.css"></noscript></head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <a class="brand" href="#simulator" aria-label="Warehouse Route Lab home">
-        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span><strong>Warehouse</strong><small>Route Lab / AI-04</small></span>
-      </a>
-      <div class="status-chip" id="system-status" role="status"><span></span> Engine ready</div>
-      <button class="icon-button" id="help-button" type="button" onclick="window.warehouseUI.openGuide()" aria-label="Open simulation guide" title="Simulation guide">?</button>
-    </header>
-
-    <main id="simulator">
-      <section class="control-rail" aria-label="Simulation controls">
-        <div class="rail-heading">
-          <p class="eyebrow">Search protocol</p>
-          <h1>Route console</h1>
-          <p>Watch each algorithm reason through the same warehouse.</p>
-        </div>
-
-        <div class="control-group">
-          <span class="control-label">Algorithm</span>
-          <div class="algorithm-grid" role="group" aria-label="Choose an algorithm">
-            <button class="algorithm active" data-algorithm="bfs" type="button" onclick="window.warehouseUI.selectAlgorithm('bfs')"><b>BFS</b><span>Shortest moves</span></button>
-            <button class="algorithm" data-algorithm="dfs" type="button" onclick="window.warehouseUI.selectAlgorithm('dfs')"><b>DFS</b><span>Deep first</span></button>
-            <button class="algorithm" data-algorithm="greedy" type="button" onclick="window.warehouseUI.selectAlgorithm('greedy')"><b>Greedy</b><span>Nearest goal</span></button>
-            <button class="algorithm" data-algorithm="astar" type="button" onclick="window.warehouseUI.selectAlgorithm('astar')"><b>A*</b><span>Lowest cost</span></button>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <div class="control-row"><span class="control-label">Playback speed</span><output id="speed-output">1×</output></div>
-          <input id="speed" type="range" min="1" max="4" step="1" value="2" aria-label="Playback speed">
-          <div class="range-labels"><span>Inspect</span><span>Fast</span></div>
-        </div>
-
-        <div class="control-group compact">
-          <span class="control-label">Scene overlays</span>
-          <label class="switch-row"><span><b>Decision frontier</b><small>Cells waiting to be inspected</small></span><input id="frontier-toggle" type="checkbox" checked><i></i></label>
-          <label class="switch-row"><span><b>Cell coordinates</b><small>Grid reference labels</small></span><input id="label-toggle" type="checkbox"><i></i></label>
-        </div>
-
-        <div class="action-stack">
-          <button class="primary-action" id="run-button" type="button" onclick="window.warehouseUI.runSelected()"><span class="play-icon">▶</span><span>Run BFS simulation</span></button>
-          <button class="secondary-action" id="trolley-button" type="button" onclick="window.warehouseUI.runTrolley()"><span>⚠</span> Run hidden trolley event</button>
-        </div>
-
-        <div class="legend" aria-label="Warehouse legend">
-          <span><i class="normal"></i>Open</span><span><i class="crowded"></i>Crowded · 4</span>
-          <span><i class="shelf"></i>Shelf</span><span><i class="restricted"></i>Restricted</span>
-          <span><i class="frontier"></i>Frontier</span><span><i class="route"></i>Chosen route</span>
-        </div>
-      </section>
-
-      <section class="stage-panel" aria-label="3D warehouse simulation">
-        <div id="scene" class="scene" role="img" aria-label="Interactive three-dimensional warehouse grid"></div>
-        <div class="scene-tools">
-          <button id="reset-camera" class="scene-button" type="button" onclick="window.warehouseUI.resetCamera()" aria-label="Reset camera view" title="Reset camera">⌂</button>
-          <button id="top-camera" class="scene-button" type="button" onclick="window.warehouseUI.topCamera()" aria-label="Switch to top view" title="Top view">▦</button>
-        </div>
-        <div class="scene-caption">
-          <span id="step-label">Awaiting run</span>
-          <strong id="decision-label">Select an algorithm, then start the simulation.</strong>
-        </div>
-        <div class="route-key"><span><i class="key-current"></i>Expanding</span><span><i class="key-candidate"></i>Candidate</span><span><i class="key-final"></i>Final path</span></div>
-      </section>
-
-      <aside class="inspector" aria-label="Live simulation telemetry">
-        <div class="inspector-head">
-          <div><p class="eyebrow">Live telemetry</p><h2 id="inspector-title">BFS analysis</h2></div>
-          <span class="run-state" id="run-state">Idle</span>
-        </div>
-        <div class="metrics">
-          <article><span>Goal</span><strong id="metric-goal">—</strong></article>
-          <article><span>Moves</span><strong id="metric-moves">—</strong></article>
-          <article><span>Path cost</span><strong id="metric-cost">—</strong></article>
-          <article><span>Expanded</span><strong id="metric-expanded">—</strong></article>
-        </div>
-        <div class="decision-card">
-          <div class="card-heading"><h3>Decision feed</h3><span id="decision-count">0 events</span></div>
-          <div class="decision-feed" id="decision-feed" aria-live="polite">
-            <div class="empty-feed"><span>⌁</span><p>Expansion decisions will appear here during playback.</p></div>
-          </div>
-        </div>
-        <div class="heuristic-note" id="heuristic-note">
-          <span>h(n)</span><p><b>Manhattan distance</b> is shown for informed search. It is a lower bound because the robot moves only in four directions and every move costs at least 1.</p>
-        </div>
-      </aside>
-    </main>
-
-    <section class="comparison" aria-labelledby="comparison-title">
-      <div class="comparison-heading"><div><p class="eyebrow">Performance evaluation</p><h2 id="comparison-title">Same warehouse. Different reasoning.</h2></div><p>The shortest route can cross crowded cells and cost more than a longer open route.</p></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th scope="col">Algorithm</th><th scope="col">Goal reached</th><th scope="col">Path length</th><th scope="col">Total cost</th><th scope="col">Nodes expanded</th><th scope="col">Execution time</th></tr></thead>
-          <tbody id="results-body"><tr><td colspan="6" class="loading-row"><span class="spinner"></span> Calculating baseline comparison…</td></tr></tbody>
-        </table>
-      </div>
-    </section>
-  </div>
-
-  <dialog id="guide-dialog">
-    <div class="dialog-head"><div><p class="eyebrow">Operator guide</p><h2>How to read the warehouse</h2></div><button id="close-guide" class="icon-button" type="button" onclick="window.warehouseUI.closeGuide()" aria-label="Close guide">×</button></div>
-    <div class="guide-grid">
-      <article><b>01</b><h3>Pick a strategy</h3><p>BFS finds the fewest moves. DFS explores a branch deeply. Greedy follows the heuristic. A* balances travel cost and remaining distance.</p></article>
-      <article><b>02</b><h3>Watch decisions</h3><p>Cyan cells form the frontier, amber cells are new candidates, and the pulsing white cell is being expanded.</p></article>
-      <article><b>03</b><h3>Trigger disruption</h3><p>The trolley is hidden from the first A* plan. The robot detects it one cell ahead, updates its map, and replans.</p></article>
-    </div>
-  </dialog>
-  <script type="module" src="/app.js"></script>
-</body>
+  <app-root></app-root>
+<script src="main-37VZJF2O.js" type="module"></script><script>document.querySelectorAll('link[data-beasties-media]').forEach(function(l){l.media=l.getAttribute('data-beasties-media');l.removeAttribute('data-beasties-media')})</script></body>
 </html>

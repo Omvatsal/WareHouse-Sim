@@ -1,0 +1,120 @@
+/* 
+ * Warehouse Route Lab — Precision Studio Theme
+ * Formulated under UI UX Pro Max design intelligence
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Surfaces & Backgrounds */
+  --surface-ground: #0a0e14;
+  --surface-card: #121820;
+  --surface-elevated: #1a222d;
+  --surface-subtle: #1e2735;
+  --surface-glass: rgba(18, 24, 32, 0.85);
+
+  /* Borders & Dividers */
+  --border-subtle: #222d3d;
+  --border-hover: #2d3b4e;
+  --border-active: #38495f;
+  --focus-ring: #2dd4bf;
+
+  /* Typography Colors */
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-disabled: #475569;
+
+  /* Semantic & Algorithmic Accents */
+  --accent-frontier: #2dd4bf;   /* Studio Teal */
+  --accent-candidate: #f59e0b;  /* Warm Amber */
+  --accent-route: #eab308;      /* Gold */
+  --accent-success: #10b981;    /* Sage Emerald */
+  --accent-danger: #f43f5e;     /* Soft Rose */
+  --accent-crowded: #b45309;    /* Bronze */
+  --accent-shelf: #475569;      /* Slate */
+
+  /* Typography Fonts */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, 'Fira Code', monospace;
+
+  /* Spacing Scale (8pt System) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-card: 0 4px 16px -2px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-elevated: 0 10px 30px -4px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-glow-teal: 0 0 16px rgba(45, 212, 191, 0.2);
+  --shadow-glow-amber: 0 0 16px rgba(245, 158, 11, 0.2);
+
+  color-scheme: dark;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  background: var(--surface-ground);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+button, input, select {
+  font-family: inherit;
+  color: inherit;
+}
+
+button:focus-visible, input:focus-visible, a:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Custom Refined Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-active);
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

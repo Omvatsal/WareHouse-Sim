@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .models import SearchResult
 from .scenario import classroom_warehouse
 from .search import manhattan, search
 
@@ -31,12 +32,42 @@ def run_algorithm(name: str) -> dict:
 
 def run_all() -> dict:
     algorithms = ["bfs", "dfs", "greedy", "astar"]
-    return {"results": [run_algorithm(name) for name in algorithms]}
+    results = [run_algorithm(name) for name in algorithms]
+    trolley_data = run_trolley_experiment()
+    results.append({
+        "algorithm": "astar_replan",
+        "reached": trolley_data["goalReached"],
+        "path": trolley_data["combinedPath"],
+        "moves": trolley_data["moves"],
+        "totalCost": trolley_data["totalCost"],
+        "nodesExpanded": trolley_data["nodesExpanded"],
+        "elapsedMs": round(trolley_data["original"]["elapsedMs"] + trolley_data["revised"]["elapsedMs"], 4),
+        "replans": trolley_data["replans"],
+        "trolley": trolley_data["trolley"],
+        "detectedAt": trolley_data["detectedAt"],
+    })
+    return {"results": results, "trolley": trolley_data}
 
 
 def run_trolley_experiment() -> dict:
     warehouse = classroom_warehouse()
     original = search(warehouse, "astar")
+    if not original.reached or len(original.path) < 2:
+        return {
+            "original": original.as_dict(),
+            "travelled": [list(warehouse.start)],
+            "detectedAt": list(warehouse.start),
+            "trolley": list(warehouse.trolley),
+            "revised": SearchResult("astar", False, [], 0, 0, 0.0, []).as_dict(),
+            "combinedPath": [],
+            "goalReached": False,
+            "replans": 0,
+            "moves": 0,
+            "totalCost": 0,
+            "nodesExpanded": original.nodes_expanded,
+            "distanceToBlockedCell": manhattan(warehouse.start, warehouse.trolley),
+        }
+
     travelled = [warehouse.start]
     detection_index = None
     current = warehouse.start
@@ -58,7 +89,7 @@ def run_trolley_experiment() -> dict:
 
     revised = search(warehouse, "astar", start=current, blocked={trolley})
     combined = travelled + revised.path[1:] if revised.reached else travelled
-    total_cost = sum(warehouse.move_cost(tuple(position)) for position in combined[1:])
+    total_cost = sum(warehouse.move_cost(tuple(position)) for position in combined[1:]) if combined else 0
     return {
         "original": original.as_dict(),
         "travelled": [list(position) for position in travelled],
@@ -67,7 +98,7 @@ def run_trolley_experiment() -> dict:
         "revised": revised.as_dict(),
         "combinedPath": [list(position) for position in combined],
         "goalReached": revised.reached,
-        "replans": 1,
+        "replans": 1 if revised.reached else 0,
         "moves": max(0, len(combined) - 1),
         "totalCost": total_cost,
         "nodesExpanded": original.nodes_expanded + revised.nodes_expanded,

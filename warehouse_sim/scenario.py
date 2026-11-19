@@ -25,5 +25,5 @@ def classroom_warehouse() -> Warehouse:
         start=(8, 1),
         goal=(1, 12),
         terrain=terrain,
-        trolley=(6, 10),
+        trolley=(6, 12),
     )
