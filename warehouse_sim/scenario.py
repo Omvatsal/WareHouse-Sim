@@ -1,3 +1,5 @@
+from random import Random
+
 from .models import Warehouse
 
 
@@ -30,3 +32,40 @@ def classroom_warehouse() -> Warehouse:
         terrain=terrain,
         trolley=(2, 7),
     )
+
+
+def random_warehouse(seed: int | None = None) -> Warehouse:
+    """Generate a complete new warehouse map, including size, endpoints and terrain.
+
+    A randomized walk is carved after terrain generation so every grid remains solvable.
+    """
+    rng = Random(seed)
+    rows, cols = rng.randint(8, 13), rng.randint(11, 17)
+    start = (rng.randrange(rows), 0)
+    goal = (rng.randrange(rows), cols - 1)
+    terrain: dict[tuple[int, int], str] = {}
+    for row in range(rows):
+        for column in range(cols):
+            roll = rng.random()
+            terrain[(row, column)] = "shelf" if roll < 0.22 else "restricted" if roll < 0.28 else "crowded" if roll < 0.42 else "normal"
+
+    # Carve a randomized monotonic route from the left edge to the right edge.
+    cursor = start
+    carved = {cursor}
+    while cursor != goal:
+        row, column = cursor
+        moves = []
+        if column < goal[1]:
+            moves.append((row, column + 1))
+        if row < goal[0]:
+            moves.append((row + 1, column))
+        elif row > goal[0]:
+            moves.append((row - 1, column))
+        cursor = rng.choice(moves)
+        carved.add(cursor)
+    for position in carved | {start, goal}:
+        terrain[position] = "normal"
+
+    candidates = [position for position, kind in terrain.items() if kind == "normal" and position not in {start, goal}]
+    trolley = rng.choice(candidates) if candidates else start
+    return Warehouse(rows=rows, cols=cols, start=start, goal=goal, terrain=terrain, trolley=trolley)

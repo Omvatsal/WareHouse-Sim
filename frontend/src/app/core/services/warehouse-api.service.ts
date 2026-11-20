@@ -18,6 +18,10 @@ export class WarehouseApiService {
     return this.http.get<WarehouseScenario>('/api/scenario');
   }
 
+  generateRandomScenario(seed: number): Observable<WarehouseScenario> {
+    return this.http.get<WarehouseScenario>(`/api/scenario/random?seed=${seed}`);
+  }
+
   getResults(): Observable<{ results: SearchResult[] }> {
     return this.http.get<{ results: SearchResult[] }>('/api/results');
   }

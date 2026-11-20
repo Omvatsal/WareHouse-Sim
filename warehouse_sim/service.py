@@ -1,12 +1,21 @@
 from __future__ import annotations
 
 from .models import SearchResult
-from .scenario import classroom_warehouse
+from .models import Warehouse
+from .scenario import classroom_warehouse, random_warehouse
 from .search import manhattan, search
+
+_active_warehouse: Warehouse = classroom_warehouse()
+
+
+def set_random_scenario(seed: int | None = None) -> dict:
+    global _active_warehouse
+    _active_warehouse = random_warehouse(seed)
+    return scenario_payload()
 
 
 def scenario_payload() -> dict:
-    warehouse = classroom_warehouse()
+    warehouse = _active_warehouse
     cells = []
     for row in range(warehouse.rows):
         for col in range(warehouse.cols):
@@ -27,7 +36,7 @@ def scenario_payload() -> dict:
 
 
 def run_algorithm(name: str) -> dict:
-    return search(classroom_warehouse(), name).as_dict()
+    return search(_active_warehouse, name).as_dict()
 
 
 def run_all() -> dict:
@@ -50,7 +59,7 @@ def run_all() -> dict:
 
 
 def run_trolley_experiment() -> dict:
-    warehouse = classroom_warehouse()
+    warehouse = _active_warehouse
     original = search(warehouse, "astar")
     if not original.reached or len(original.path) < 2:
         return {

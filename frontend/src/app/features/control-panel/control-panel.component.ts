@@ -79,6 +79,17 @@ import { AlgorithmType } from '../../core/models/warehouse.model';
       <section class="panel-section actions">
         <button
           type="button"
+          class="btn-secondary"
+          (click)="store.generateRandomScenario()"
+          [disabled]="store.isRunning()"
+          aria-label="Generate a new random warehouse grid"
+        >
+          <span aria-hidden="true">⤨</span>
+          <span>Generate Random Grid</span>
+        </button>
+
+        <button
+          type="button"
           class="btn-primary"
           (click)="store.runSelected()"
           [disabled]="store.isRunning()"

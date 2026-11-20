@@ -39,6 +39,7 @@ export class SimulationStoreService {
   readonly statusMessage = signal<string>('Select an algorithm, then start the simulation.');
   readonly stepLabel = signal<string>('Awaiting run');
   readonly trolleyActive = signal<boolean>(false);
+  private randomScenarioCounter = 0;
 
   // Computed Values
   readonly moves = computed(() => this.currentResult()?.moves ?? 0);
@@ -86,6 +87,27 @@ export class SimulationStoreService {
         this.systemStatus.set('error');
         this.statusMessage.set('Could not connect to simulation server. Verify server.py is running.');
       },
+    });
+  }
+
+  generateRandomScenario(): void {
+    if (this.isRunning()) return;
+    // Millisecond time plus a local counter prevents identical maps when the
+    // user clicks repeatedly within the same second.
+    const seed = Date.now() + (++this.randomScenarioCounter * 997);
+    this.api.generateRandomScenario(seed).subscribe({
+      next: (scenario) => {
+        this.scenario.set(scenario);
+        this.currentResult.set(null);
+        this.feedEvents.set([]);
+        this.scene.clearOverlays();
+        this.scene.buildWarehouse(scenario, this.showLabels());
+        this.loadComparison();
+        this.systemStatus.set('ready');
+        this.stepLabel.set(`Scenario ${seed} generated`);
+        this.statusMessage.set('Random grid ready. Every search will respect the generated obstacles.');
+      },
+      error: () => this.statusMessage.set('Could not generate a random scenario.'),
     });
   }
 

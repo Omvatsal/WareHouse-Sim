@@ -111,6 +111,7 @@ export class ThreeSceneService {
   }
 
   buildWarehouse(scenario: WarehouseScenario, showLabels = false): void {
+    this.clearGeneratedScene();
     this.scenario = scenario;
     const { rows, cols, cells, start, goal } = scenario;
 
@@ -155,6 +156,27 @@ export class ThreeSceneService {
     this.trolleyMesh = this.buildTrolley(scenario.trolley);
 
     this.resetCamera();
+  }
+
+  private clearGeneratedScene(): void {
+    if (!this.scene) return;
+    for (const object of [...this.scene.children]) {
+      if (object instanceof THREE.Light) continue;
+      this.scene.remove(object);
+      object.traverse((child) => {
+        const mesh = child as THREE.Mesh;
+        mesh.geometry?.dispose();
+        const material = mesh.material as THREE.Material | THREE.Material[] | undefined;
+        if (Array.isArray(material)) material.forEach((item) => item.dispose());
+        else material?.dispose();
+      });
+    }
+    this.overlays = [];
+    this.coordinateLabels = [];
+    this.cellMeshes.clear();
+    this.robotMesh = null;
+    this.robotBeaconMesh = null;
+    this.trolleyMesh = null;
   }
 
   private material(color: number, extras: Record<string, any> = {}): THREE.MeshStandardMaterial {

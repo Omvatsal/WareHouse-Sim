@@ -4,9 +4,9 @@ import json
 import mimetypes
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
-from warehouse_sim.service import run_algorithm, run_all, run_trolley_experiment, scenario_payload
+from warehouse_sim.service import run_algorithm, run_all, run_trolley_experiment, scenario_payload, set_random_scenario
 
 ROOT = Path(__file__).resolve().parent
 
@@ -22,10 +22,14 @@ class WarehouseHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self) -> None:
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path = parsed.path
         try:
             if path == "/api/scenario":
                 return self._json(scenario_payload())
+            if path == "/api/scenario/random":
+                raw_seed = parse_qs(parsed.query).get("seed", [None])[0]
+                return self._json(set_random_scenario(int(raw_seed) if raw_seed else None))
             if path == "/api/results":
                 return self._json(run_all())
             if path.startswith("/api/run/"):
